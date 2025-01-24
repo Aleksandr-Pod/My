@@ -13,9 +13,15 @@ clock = pygame.time.Clock()
 
 # Класс танка
 class Tank():
-    def __init__(self, filename, hp, ammo, defence, range, color, x, y, l, h):
-        self.hp = hp
-        self.hp
+    def __init__(self, filename, hp, ammo, defence, range, color, x, y, l, h, side = "left"):
+        self.team = side
+        self.maxHP = hp
+        self.currentHP = hp
+        if side == "left":
+            self.maxHPBar = pygame.Rect(10, 80, 80, 20)
+        else:
+            self.maxHPBar = pygame.Rect(710, 80, 80, 20)
+        self.currentHPBar = self.maxHPBar
         self.ammo = ammo
         self.defence = defence
         self.range = range
@@ -35,18 +41,20 @@ class Tank():
         self.box.x += dx
         self.box.y += dy
 
-    def writeHP(self, side):
+    def writeHP(self):
         fontObj = pygame.font.SysFont('arial', 24, bold=True)
-        textSurface = fontObj.render(f"HP: {str(self.hp)}", True, ("#5f5f5f"))
-        if side == "left":
+        textSurface = fontObj.render(f"HP: {self.currentHP}", True, ("#5f5f5f"))
+        if self.team == "left":
             mw.blit(textSurface, (20, 50))
             # пишем текст слева
         else:
             mw.blit(textSurface, (720, 50))
             # пишем текст справа
+
     def drawHP(self):
-
-
+        pygame.draw.rect(mw, "darkgray", self.maxHPBar)
+        self.currentHPBar.width = 80 * (self.currentHP / self.maxHP)
+        pygame.draw.rect(mw, "red", self.currentHPBar)
 
 class Mines():
     def __init__(self, x, y):
@@ -80,10 +88,10 @@ firedMines = []
 
 in_game = True
 
-tank1 = Tank("images/tank.png", 140, "pod", 60, 40, "gray", 40, 150, 40, 40)
+tank1 = Tank("images/tank.png", 140, "pod", 60, 40, "gray", 40, 150, 40, 40, "left")
 tank1.moveDirection = "right"
-tank2 = Tank("images/launcher.png", 200, "bp", 100, 30, "gray", 750, 550, 40, 40)
-tank3 = Tank("images/tank-50.png", 150, "bp", 100, 30, "gray", 40, 350, 40, 40)
+# tank2 = Tank("images/launcher.png", 200, "bp", 100, 30, "gray", 750, 550, 40, 40)
+tank3 = Tank("images/tank-50.png", 150, "bp", 100, 30, "gray", 40, 350, 40, 40, "right")
 
 # Функция для рисования мин
 def draw_firedMines():
@@ -97,7 +105,7 @@ def check_mines(tank):
             mine.draw()
             minefieldSprites.remove(mine)
             firedMines.append(mine)
-            tank.hp -= 10
+            tank.currentHP -= 10
 
 # Функция для перемещения танка
 def move_tank(tank, direction, rotation, move_x, move_y, boundary_check):
@@ -174,15 +182,19 @@ while in_game:
 
     # Проверяем столкновения танков с минами
     check_mines(tank1)
-    check_mines(tank2)
+    # check_mines(tank2)
+    check_mines(tank3)
     
     # Рисуем танки
     tank1.draw()
-    tank2.draw()
+    # tank2.draw()
     tank3.draw()
 
-    tank1.writeHP("left")
-    tank2.writeHP("")
+    tank1.writeHP()
+    tank1.drawHP()
+    # tank2.writeHP("")
+    tank3.writeHP()
+    tank3.drawHP()
     
     pygame.display.update()
     clock.tick(30)
