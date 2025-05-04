@@ -1,10 +1,6 @@
 import pygame
 from random import randint
-
-
-
-# for i in range(10):
-#     print(fild[i])  # Выводим поле в консоль для проверки
+from time import sleep
 
 pygame.init()
 # Инициализация окна
@@ -84,14 +80,20 @@ for x in range(20):
     xline = []
 print("total quantity of mines:", len(minefieldSprites))
 
-firedMines = []
+def writeGameOver(tank):
+    fontObj = pygame.font.SysFont('arial', 60, bold=True)
+    textSurface = fontObj.render("GAME OVER - "+ tank.team + " loose", True, ("#5f5f5f"))
+    mw.blit(textSurface, (100, 10))
+    print(f"GameOver - {tank.team} loose")
 
+firedMines = []
+whoLoose = ""
 in_game = True
 
 tank1 = Tank("images/tank.png", 140, "pod", 60, 40, "gray", 40, 150, 40, 40, "left")
 tank1.moveDirection = "right"
 # tank2 = Tank("images/launcher.png", 200, "bp", 100, 30, "gray", 750, 550, 40, 40)
-tank3 = Tank("images/tank-50.png", 150, "bp", 100, 30, "gray", 40, 350, 40, 40, "right")
+tank3 = Tank("images/tank-50.png", 150, "bp", 100, 30, "gray", 700, 350, 40, 40, "right")
 
 # Функция для рисования мин
 def draw_firedMines():
@@ -99,13 +101,18 @@ def draw_firedMines():
         mine.draw()
 
 # Проверка на столкновение с миной
-def check_mines(tank):
+def check_mines(tank, whoLoose):
     for mine in minefieldSprites:
         if mine.is_collide(tank.box):
             mine.draw()
             minefieldSprites.remove(mine)
             firedMines.append(mine)
             tank.currentHP -= 10
+            if tank.currentHP <= 0:
+                whoLoose = tank
+                writeGameOver(whoLoose)
+                break
+    return whoLoose
 
 # Функция для перемещения танка
 def move_tank(tank, direction, rotation, move_x, move_y, boundary_check):
@@ -116,7 +123,7 @@ def move_tank(tank, direction, rotation, move_x, move_y, boundary_check):
         tank.move(move_x, move_y)
 
 while in_game:
-    mw.fill("gray")
+    mw.fill("green")
 
     event_list = pygame.event.get()
     for event in event_list:
@@ -143,31 +150,6 @@ while in_game:
         if tank1.box.x < 760:
             tank1.move(5, 0)
 
-    # if keys[pygame.K_w]:
-    #     if tank3.moveDirection != "up":
-    #         tank3.currentView = pygame.transform.rotate(tank3.picture, 0)
-    #         tank3.moveDirection = "up"
-    #     if tank3.box.y > 0:
-    #         tank3.move(0, -5)
-    # if keys[pygame.K_s]:
-    #     if tank3.moveDirection != "down":
-    #         tank3.currentView = pygame.transform.rotate(tank3.picture, 180)
-    #         tank3.moveDirection = "down"
-    #     if tank3.box.y < 560:
-    #         tank3.move(0, 5)
-    # if keys[pygame.K_a]:
-    #     if tank3.moveDirection != "left":
-    #         tank3.currentView = pygame.transform.rotate(tank3.picture, 90)
-    #         tank3.moveDirection = "left"
-    #     if tank3.box.x > 0:
-    #         tank3.move(-5, 0)
-    # if keys[pygame.K_d]:
-    #     if tank3.moveDirection != "right":
-    #         tank3.currentView = pygame.transform.rotate(tank3.picture, 270)
-    #         tank3.moveDirection = "right"
-    #     if tank3.box.x < 760:
-    #         tank3.move(5, 0)
-
     if keys[pygame.K_w]:
         move_tank(tank3, "up", 0, 0, -5, tank3.box.y > 0)
     if keys[pygame.K_s]:
@@ -181,9 +163,11 @@ while in_game:
     draw_firedMines()
 
     # Проверяем столкновения танков с минами
-    check_mines(tank1)
-    # check_mines(tank2)
-    check_mines(tank3)
+    whoLoose = check_mines(tank1, whoLoose)
+    whoLoose = check_mines(tank3, whoLoose)
+    # Проверяем, нужно ли завершить игру
+    if whoLoose != "":
+        in_game = False
     
     # Рисуем танки
     tank1.draw()
@@ -199,4 +183,10 @@ while in_game:
     pygame.display.update()
     clock.tick(30)
 
+sleep(3)
+waiting_for_key = True
+while waiting_for_key:
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:  # Check if a key is pressed
+            waiting_for_key = False 
 pygame.quit()
